@@ -1,6 +1,8 @@
-def main():
-    print("Hello from exchange-rate-service!")
+from fastapi import FastAPI
+from app.api import ingest
+
+app = FastAPI()
 
 
-if __name__ == "__main__":
-    main()
+# Register routes
+app.include_router(ingest.router)
