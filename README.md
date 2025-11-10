@@ -1,9 +1,9 @@
 # exchange-rate-service
 service for updating exchange rates in google cloud
 
-## Design
+### Design
 
-## Ingestion Sequence
+#### Ingestion Sequence
 
 ```mermaid
 sequenceDiagram
@@ -27,7 +27,7 @@ sequenceDiagram
 
 ```
 
-## Domain Overview idea --> will be updated
+#### Domain Overview idea --> will be updated
 
 ```mermaid
 classDiagram
