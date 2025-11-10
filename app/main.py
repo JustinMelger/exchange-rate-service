@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from app.api import ingest
 
+
 app = FastAPI()
 
 
