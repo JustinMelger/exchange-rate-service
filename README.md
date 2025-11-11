@@ -32,25 +32,33 @@ sequenceDiagram
 ```mermaid
 classDiagram
     class OpenExchangeClient {
-        url: str
-        +fetch_historical_exchange_rates(days): list[ExchangeRate]
-
+        -base_url: str
+        -api_key: str
+        -symbols: str
+        +fetch_historical_exchange_rates(days:int): list[ExchangeRate]
+        +convert_to_euro_base(euro_rate: float, rates: dict): dict
     }
 
     class ExchangeRate {
         day: str
         rates: dict[str, float]
-        error: bool
-
     }
 
     class BigQueryClient {
-
+        -project_id: str
+        -dataset: str
+        -staging_table: str
+        -prod_table: str
+        +insert_rows(table, rows): int
+        +insert_into_staging(rows): int
+        +execute_query(query): RowIterator
     }
 
     class ExchangeRateIngressService {
         exchange_client: OpenExchangeClient
         bigquery_client: BigQueryClient
+        +ingest_historical_rates(): dict
+        -_build_staging_rows(rates): list[dict]
 
     }
 
