@@ -1,7 +1,10 @@
 from __future__ import annotations
 from typing import Any, Mapping, Sequence
+
 from google.cloud import bigquery
 from google.oauth2 import service_account
+
+from app.database import queries as bq_queries
 
 
 class BigQueryClient:
@@ -20,8 +23,8 @@ class BigQueryClient:
             credential_file (str): Path to the service-account JSON.
             project_id (str): GCP project ID.
             dataset (str): BigQuery dataset name.
-            staging_table (str): Fully qualified name of the staging table.
-            prod_table (str): Fully qualified name of the production table.
+            staging_table (str): Name of the staging table.
+            prod_table (str): Name of the production table.
         """
 
         self.project_id = project_id
@@ -82,3 +85,22 @@ class BigQueryClient:
             int: Number of rows successfully inserted.
         """
         return self.insert_rows(self.staging_table, rows)
+
+    def merge_staging_into_prod(self) -> None:
+        """Merge the staging table into the production table."""
+        query = bq_queries.merge_exchange_rates(
+            project_id=self.project_id,
+            dataset=self.dataset,
+            staging_table=self.staging_table,
+            prod_table=self.prod_table,
+        )
+        self.execute_query(query)
+
+    def truncate_staging(self) -> None:
+        """Truncate staging table"""
+        query = bq_queries.truncate_table(
+            project_id=self.project_id,
+            dataset=self.dataset,
+            table_name=self.staging_table,
+        )
+        self.execute_query(query)
