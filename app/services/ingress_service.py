@@ -2,6 +2,7 @@ from typing import Any
 
 from app.external_clients.open_exchange import ExchangeRate, OpenExchangeClient
 from app.database.bigquery import BigQueryClient
+from datetime import datetime, timezone
 
 
 class ExchangeRateIngressService:
@@ -32,6 +33,8 @@ class ExchangeRateIngressService:
         inserted_rows = 0
         if rows:
             inserted_rows = self.bigquery_client.insert_into_staging(rows)
+            self.bigquery_client.merge_staging_into_prod()
+            self.bigquery_client.truncate_staging()
 
         return {"inserted_rows": inserted_rows, "rates": rates}
 
@@ -44,6 +47,7 @@ class ExchangeRateIngressService:
         Returns:
             list[dict[str, Any]]: Row payloads ready for BigQuery.
         """
+        ingested_at = datetime.now(timezone.utc).isoformat()
         staging_rows: list[dict[str, Any]] = []
         for snapshot in rates:
             for currency, rate_eur in snapshot.rates.items():
@@ -54,6 +58,7 @@ class ExchangeRateIngressService:
                         "rate_date": snapshot.day,
                         "currency": currency,
                         "rate_eur": rate_eur,
+                        "ingested_at": ingested_at,
                     }
                 )
         return staging_rows
