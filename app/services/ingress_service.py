@@ -12,9 +12,9 @@ class ExchangeRateIngressService:
         self.exchange_client = exchange_client
         self.bigquery_client = bigquery_client
 
-    def ingest_historical_rates(self) -> dict:
+    async def ingest_historical_rates(self) -> dict:
 
-        self.exchange_client.fetch_historical_exchange_rates()
+        rates = await self.exchange_client.fetch_historical_exchange_rates()
         status = self.bigquery_client.execute_query()
 
-        return status
+        return {"status": status, "rates": rates}
