@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Depends
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, Query
 from app.external_clients.open_exchange import OpenExchangeClient
 from app.database.bigquery import BigQueryClient
 from app.services.ingress_service import ExchangeRateIngressService
@@ -35,6 +37,7 @@ def get_ingress_service(
 
 @router.post("/exchange_rates/ingest")
 async def ingest_exchange_rates(
+    days: Annotated[int, Query(ge=0, le=50)] = 30,
     ingress_service: ExchangeRateIngressService = Depends(get_ingress_service),
 ):
-    return await ingress_service.ingest_historical_rates()
+    return await ingress_service.ingest_historical_rates(number_of_days=days)

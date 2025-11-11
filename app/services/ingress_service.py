@@ -22,13 +22,16 @@ class ExchangeRateIngressService:
         self.exchange_client = exchange_client
         self.bigquery_client = bigquery_client
 
-    async def ingest_historical_rates(self) -> dict:
+    async def ingest_historical_rates(self, number_of_days: int = 1) -> dict:
         """Fetch historical rates and insert them into the staging table.
+
+         Args:
+            number_of_days (int):  Number of consecutive days (including today) to retrieve.
 
         Returns:
             dict: Contains the inserted row count and raw rate snapshots.
         """
-        rates = await self.exchange_client.fetch_historical_exchange_rates()
+        rates = await self.exchange_client.fetch_historical_exchange_rates(days=number_of_days)
         rows = self._build_staging_rows(rates)
         inserted_rows = 0
         if rows:
