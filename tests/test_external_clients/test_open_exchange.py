@@ -10,6 +10,7 @@ def _build_client() -> OpenExchangeClient:
 
 
 def test_convert_to_euro_base_produces_expected_values():
+    """Converts USD base to EUR base while keeping precision."""
     client = _build_client()
     euro_rate = 1.2
     rates = {"USD": 1.0, "GBP": 0.8, "JPY": 110.0, "EUR": 1.0}
@@ -25,6 +26,7 @@ def test_convert_to_euro_base_produces_expected_values():
 
 
 def test_convert_to_euro_base_skips_none_values():
+    """Drops currencies with null rates to avoid division errors."""
     client = _build_client()
     euro_rate = 1.0
     rates = {"USD": 1.0, "NULL": None}
