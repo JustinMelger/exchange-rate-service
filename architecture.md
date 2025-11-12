@@ -67,6 +67,25 @@ classDiagram
     ExchangeRateRouter --> ExchangeRateIngestService : trigger ingest
 ```
 
+## Data Model
+
+```mermaid
+erDiagram
+    STAGING ||--|| PROD : "merge on rate_date + currency"
+    STAGING {
+        DATE rate_date
+        STRING currency
+        NUMERIC rate_eur
+        TIMESTAMP ingested_at
+    }
+    PROD {
+        DATE rate_date
+        STRING currency
+        NUMERIC rate_eur
+        TIMESTAMP last_updated_at
+    }
+```
+
 ## Update Strategy
 
 This pipeline uses a `MERGE` to keep the production table synchronized with the latest rates:
