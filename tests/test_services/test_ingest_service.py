@@ -3,10 +3,10 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from app.external_clients.open_exchange import ExchangeRate
-from app.services.ingress_service import ExchangeRateIngressService
+from app.services.ingest_service import ExchangeRateIngestService
 
 
-def build_service(rates: list[ExchangeRate]) -> ExchangeRateIngressService:
+def build_service(rates: list[ExchangeRate]) -> ExchangeRateIngestService:
     exchange_client = MagicMock()
     exchange_client.fetch_historical_exchange_rates = AsyncMock(return_value=rates)
 
@@ -15,7 +15,7 @@ def build_service(rates: list[ExchangeRate]) -> ExchangeRateIngressService:
         [1 for snapshot in rates for currency in snapshot.rates if currency != "EUR"]
     )
 
-    return ExchangeRateIngressService(exchange_client=exchange_client, bigquery_client=bigquery_client)
+    return ExchangeRateIngestService(exchange_client=exchange_client, bigquery_client=bigquery_client)
 
 
 def test_build_staging_rows_skips_eur_currency():
@@ -48,7 +48,10 @@ async def test_ingest_historical_rates_inserts_and_merges():
     service.bigquery_client.merge_staging_into_prod.assert_called_once()
     service.bigquery_client.truncate_staging.assert_called_once()
     assert result["inserted_rows"] == 2
-    assert result["rates"] == rates
+    assert result["days_requested"] == 1
+    assert result["staging_merged"] is True
+    assert result["staging_truncated"] is True
+    assert "ingested_at" in result
 
 
 @pytest.mark.asyncio
@@ -65,4 +68,5 @@ async def test_ingest_historical_rates_skips_bigquery_when_no_rows():
     service.bigquery_client.merge_staging_into_prod.assert_not_called()
     service.bigquery_client.truncate_staging.assert_not_called()
     assert result["inserted_rows"] == 0
-    assert result["rates"] == rates
+    assert result["staging_merged"] is False
+    assert result["staging_truncated"] is False

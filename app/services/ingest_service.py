@@ -5,7 +5,7 @@ from app.database.bigquery import BigQueryClient
 from datetime import datetime, timezone
 
 
-class ExchangeRateIngressService:
+class ExchangeRateIngestService:
     """Coordinate fetching exchange rates and loading them into BigQuery."""
 
     def __init__(
@@ -22,7 +22,7 @@ class ExchangeRateIngressService:
         self.exchange_client = exchange_client
         self.bigquery_client = bigquery_client
 
-    async def ingest_historical_rates(self, number_of_days: int = 1) -> dict:
+    async def ingest_historical_rates(self, number_of_days: int = 1) -> dict[str, Any]:
         """Fetch historical rates and insert them into the staging table.
 
          Args:
@@ -34,12 +34,22 @@ class ExchangeRateIngressService:
         rates = await self.exchange_client.fetch_historical_exchange_rates(days=number_of_days)
         rows = self._build_staging_rows(rates)
         inserted_rows = 0
+        staging_merged = False
+        staging_truncated = False
         if rows:
             inserted_rows = self.bigquery_client.insert_into_staging(rows)
             self.bigquery_client.merge_staging_into_prod()
+            staging_merged = True
             self.bigquery_client.truncate_staging()
+            staging_truncated = True
 
-        return {"inserted_rows": inserted_rows, "rates": rates}
+        return {
+            "inserted_rows": inserted_rows,
+            "days_requested": number_of_days,
+            "staging_merged": staging_merged,
+            "staging_truncated": staging_truncated,
+            "ingested_at": datetime.now(timezone.utc).isoformat(),
+        }
 
     def _build_staging_rows(self, rates: list[ExchangeRate]) -> list[dict[str, Any]]:
         """Convert API snapshots into BigQuery staging rows.

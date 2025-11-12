@@ -6,18 +6,18 @@
 sequenceDiagram
     participant User as User
     participant CloudRun as Cloud Run (FastAPI)
-    participant Ingress as ExchangeRateIngressService
+    participant Ingest as ExchangeRateIngestService
     participant OpenFX as OpenExchange API
     participant BQ as BigQuery
     participant Looker as Looker Studio
 
     User->>CloudRun: POST /exchange_rates/ingest
-    CloudRun->>Ingress: ingest_historical_rates()
-    Ingress->>OpenFX: fetch_historical_exchange_rates()
-    OpenFX-->>Ingress: exchange_rates_data
-    Ingress->>BQ: load staging rows
-    Ingress->>BQ: merge staging into prod
-    Ingress->>BQ: truncate staging
+    CloudRun->>Ingest: ingest_historical_rates()
+    Ingest->>OpenFX: fetch_historical_exchange_rates()
+    OpenFX-->>Ingest: exchange_rates_data
+    Ingest->>BQ: load staging rows
+    Ingest->>BQ: merge staging into prod
+    Ingest->>BQ: truncate staging
     CloudRun-->>User: {status: success, inserted_rows}
     Looker ->> BQ: query prod table
     BQ -->> Looker: latest exchange rates
@@ -50,7 +50,7 @@ classDiagram
         +execute_query(query): RowIterator
     }
 
-    class ExchangeRateIngressService {
+    class ExchangeRateIngestService {
         exchange_client: OpenExchangeClient
         bigquery_client: BigQueryClient
         +ingest_historical_rates(): dict
@@ -61,10 +61,10 @@ classDiagram
         POST /exchange_rates/ingest
     }
 
-    ExchangeRateIngressService --> OpenExchangeClient
-    ExchangeRateIngressService --> BigQueryClient
+    ExchangeRateIngestService --> OpenExchangeClient
+    ExchangeRateIngestService --> BigQueryClient
     OpenExchangeClient --> ExchangeRate
-    ExchangeRateRouter --> ExchangeRateIngressService : trigger ingest
+    ExchangeRateRouter --> ExchangeRateIngestService : trigger ingest
 ```
 
 ## Update Strategy

@@ -24,7 +24,7 @@ Copy `app/core/.env.example` to `app/core/.env` and fill in the required API key
 uv run -m pytest tests
 
 # Run a specific module
-uv run -m pytest tests/test_services/test_ingress_service.py
+uv run -m pytest tests/test_services/test_ingest_service.py
 ```
 
 ## Architecture
