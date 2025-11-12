@@ -3,6 +3,7 @@ from typing import Any
 from app.external_clients.open_exchange import ExchangeRate, OpenExchangeClient
 from app.database.bigquery import BigQueryClient
 from datetime import datetime, timezone
+from app.core.errors import ingest_error_handler
 
 
 class ExchangeRateIngestService:
@@ -22,7 +23,8 @@ class ExchangeRateIngestService:
         self.exchange_client = exchange_client
         self.bigquery_client = bigquery_client
 
-    async def ingest_historical_rates(self, number_of_days: int = 1) -> dict[str, Any]:
+    @ingest_error_handler()
+    async def ingest_historical_rates(self, number_of_days: int) -> dict[str, Any]:
         """Fetch historical rates and insert them into the staging table.
 
          Args:

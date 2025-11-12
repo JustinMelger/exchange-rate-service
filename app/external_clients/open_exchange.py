@@ -4,7 +4,6 @@ import asyncio
 import logging
 from dataclasses import dataclass
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -74,7 +73,7 @@ class OpenExchangeClient:
         rates_eur_base = self.convert_to_euro_base(euro_rate, rates)
         return ExchangeRate(day=day_iso, rates=rates_eur_base)
 
-    async def fetch_historical_exchange_rates(self, days: int = 1) -> list[ExchangeRate]:
+    async def fetch_historical_exchange_rates(self, days: int) -> list[ExchangeRate]:
         """Fetch exchange rates for the most recent N days.
 
         Args:
@@ -83,9 +82,6 @@ class OpenExchangeClient:
         Returns:
             List[ExchangeRate]: Successful exchange rate snapshots ordered oldest to newest.
         """
-
-        if days <= 0:
-            return []
 
         end_date = date.today()
         start_date = end_date - timedelta(days=days - 1)
