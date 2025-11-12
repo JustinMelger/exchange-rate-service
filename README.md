@@ -9,6 +9,10 @@ uv sync
 
 # Run the FastAPI app locally (default port 8000)
 uv run fastapi dev app/main.py --host 0.0.0.0 --port 8000
+
+# Build and run with Docker
+docker build -t exchange-rate-service .
+docker run --rm -p 8000:8000 exchange-rate-service
 ```
 
 ### Design
@@ -81,3 +85,14 @@ classDiagram
     OpenExchangeClient --> ExchangeRate
     ExchangeRateRouter --> ExchangeRateIngressService : trigger ingest
 ```
+
+### Update strategy
+
+This pipeline uses a `MERGE` to keep the production table synchronized with the latest rates:
+- Daily payloads are small, so merging a few rows is operationally cheap.
+- `MERGE` statements update changed currencies and insert new ones in a single job, keeping the table current without extra deduplication steps.
+- A single prod table stays query-ready for Looker, instead of maintaining an additional self-updating view over append-only history .
+
+After each merge, the staging table is truncated to keep the next ingest run clean:
+- Clearing staging avoids accidentally reprocessing stale rows or inflating merge windows.
+- Keeping staging empty between loads simplifies monitoring and makes it obvious if a run fails before merge.
