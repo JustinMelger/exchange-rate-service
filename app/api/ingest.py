@@ -39,5 +39,5 @@ def get_ingest_service(
 async def ingest_exchange_rates(
     days: Annotated[int, Query(ge=0, le=50)] = 30,
     ingest_service: ExchangeRateIngestService = Depends(get_ingest_service),
-):
+) -> dict:
     return await ingest_service.ingest_historical_rates(number_of_days=days)
