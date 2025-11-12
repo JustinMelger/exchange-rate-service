@@ -42,7 +42,7 @@ async def test_ingest_historical_rates_inserts_and_merges():
     ]
     service = build_service(rates)
 
-    result = await service.ingest_historical_rates()
+    result = await service.ingest_historical_rates(number_of_days=1)
 
     service.bigquery_client.insert_into_staging.assert_called_once()
     service.bigquery_client.merge_staging_into_prod.assert_called_once()
@@ -62,7 +62,7 @@ async def test_ingest_historical_rates_skips_bigquery_when_no_rows():
     ]
     service = build_service(rates)
 
-    result = await service.ingest_historical_rates()
+    result = await service.ingest_historical_rates(number_of_days=1)
 
     service.bigquery_client.insert_into_staging.assert_not_called()
     service.bigquery_client.merge_staging_into_prod.assert_not_called()
