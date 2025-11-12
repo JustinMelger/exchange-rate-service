@@ -1,5 +1,5 @@
 # exchange-rate-service
-service for updating exchange rates in google cloud
+Service for updating exchange rates with base euro in google bigquery.
 
 ## Getting Started
 
