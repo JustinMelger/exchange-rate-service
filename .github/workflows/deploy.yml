@@ -30,13 +30,25 @@ jobs:
           IMAGE="gcr.io/${{ secrets.GCP_PROJECT }}/${{ secrets.GCP_SERVICE }}:${{ github.sha }}"
           gcloud builds submit --tag "$IMAGE"
           echo "IMAGE=$IMAGE" >> "$GITHUB_ENV"
+      
+      - name: Prepare env file
+        run: |
+          cat <<'EOF' > env-vars.txt
+          OPEN_EXCHANGE_API_KEY=${{ secrets.OPEN_EXCHANGE_API_KEY }}
+          OPEN_EXCHANGE_URL=${{ secrets.OPEN_EXCHANGE_URL }}
+          OPEN_EXCHANGE_SYMBOLS=${{ secrets.OPEN_EXCHANGE_SYMBOLS }}
+          GOOGLE_PROJECT_ID=${{ secrets.GOOGLE_PROJECT_ID }}
+          BIGQUERY_DATASET=${{ secrets.BIGQUERY_DATASET }}
+          STAGING_TABLE=${{ secrets.STAGING_TABLE }}
+          PROD_TABLE=${{ secrets.PROD_TABLE }}
+          EOF
 
       - name: Deploy to Cloud Run (authenticated)
         run: |
           gcloud run deploy ${{ secrets.GCP_SERVICE }} \
             --image "$IMAGE" \
+            --env-vars-file env-vars.txt \
             --region ${{ secrets.GCP_REGION }} \
             --platform managed \
             --no-allow-unauthenticated \
-            --set-env-vars OPEN_EXCHANGE_API_KEY=${{ secrets.OPEN_EXCHANGE_API_KEY }},OPEN_EXCHANGE_URL=${{ secrets.OPEN_EXCHANGE_URL }},OPEN_EXCHANGE_SYMBOLS=${{ secrets.OPEN_EXCHANGE_SYMBOLS }},GOOGLE_PROJECT_ID=${{ secrets.GOOGLE_PROJECT_ID }},BIGQUERY_DATASET=${{ secrets.BIGQUERY_DATASET }},STAGING_TABLE=${{ secrets.STAGING_TABLE }},PROD_TABLE=${{ secrets.PROD_TABLE }} \
             --set-secrets GOOGLE_APPLICATION_CREDENTIALS=gcp-json:latest
