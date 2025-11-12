@@ -47,7 +47,7 @@ jobs:
         run: |
           gcloud run deploy ${{ secrets.GCP_SERVICE }} \
             --image "$IMAGE" \
-            --env-vars-file env-vars.txt \
+            --env-vars-file env-vars.yaml \
             --region ${{ secrets.GCP_REGION }} \
             --platform managed \
             --no-allow-unauthenticated \
