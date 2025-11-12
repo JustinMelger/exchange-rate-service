@@ -15,84 +15,18 @@ docker build -t exchange-rate-service .
 docker run --rm -p 8000:8000 exchange-rate-service
 ```
 
-### Design
+Copy `app/core/.env.example` to `app/core/.env` and fill in the required API keys and BigQuery settings before running locally.
 
-#### Ingestion Sequence
+## Testing
 
-```mermaid
-sequenceDiagram
-    participant User as User
-    participant CloudRun as Cloud Run (FastAPI)
-    participant Ingress as ExchangeRateIngressService
-    participant OpenFX as OpenExchange API
-    participant BQ as BigQuery
-    participant Looker as Looker Studio
+```bash
+# Run the entire suite
+uv run -m pytest tests
 
-    User->>CloudRun: POST /exchange_rates/ingest
-    CloudRun->>Ingress: ingest_historical_rates()
-    Ingress->>OpenFX: fetch_historical_exchange_rates()
-    OpenFX-->>Ingress: exchange_rates_data
-    Ingress->>BQ: load staging rows
-    Ingress->>BQ: merge staging into prod
-    Ingress->>BQ: truncate staging
-    CloudRun-->>User: {status: success, inserted_rows}
-    Looker ->> BQ: query prod table
-    BQ -->> Looker: latest exchange rates
-
+# Run a specific module
+uv run -m pytest tests/test_services/test_ingress_service.py
 ```
 
-#### Domain Overview idea --> will be updated
+## Architecture
 
-```mermaid
-classDiagram
-    class OpenExchangeClient {
-        -base_url: str
-        -api_key: str
-        -symbols: str
-        +fetch_historical_exchange_rates(days:int): list[ExchangeRate]
-        +convert_to_euro_base(euro_rate: float, rates: dict): dict
-    }
-
-    class ExchangeRate {
-        day: str
-        rates: dict[str, float]
-    }
-
-    class BigQueryClient {
-        -project_id: str
-        -dataset: str
-        -staging_table: str
-        -prod_table: str
-        +insert_rows(table, rows): int
-        +insert_into_staging(rows): int
-        +execute_query(query): RowIterator
-    }
-
-    class ExchangeRateIngressService {
-        exchange_client: OpenExchangeClient
-        bigquery_client: BigQueryClient
-        +ingest_historical_rates(): dict
-        -_build_staging_rows(rates): list[dict]
-
-    }
-
-    class ExchangeRateRouter {
-        POST /exchange_rates/ingest
-    }
-
-    ExchangeRateIngressService --> OpenExchangeClient
-    ExchangeRateIngressService --> BigQueryClient
-    OpenExchangeClient --> ExchangeRate
-    ExchangeRateRouter --> ExchangeRateIngressService : trigger ingest
-```
-
-### Update strategy
-
-This pipeline uses a `MERGE` to keep the production table synchronized with the latest rates:
-- Daily payloads are small, so merging a few rows is operationally cheap.
-- `MERGE` statements update changed currencies and insert new ones in a single job, keeping the table current without extra deduplication steps.
-- A single prod table stays query-ready for Looker, instead of maintaining an additional self-updating view over append-only history .
-
-After each merge, the staging table is truncated to keep the next ingest run clean:
-- Clearing staging avoids accidentally reprocessing stale rows or inflating merge windows.
-- Keeping staging empty between loads simplifies monitoring and makes it obvious if a run fails before merge.
+For sequence diagrams, class relationships, and data-flow details see [architecture.md](architecture.md).
