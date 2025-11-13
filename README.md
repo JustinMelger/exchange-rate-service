@@ -25,6 +25,7 @@ docker run --rm -p 8000:8000 exchange-rate-service
 Copy `app/core/.env.example` to `app/core/.env` and fill in the required API keys and BigQuery settings before running locally.
 
 ### Triggering an ingest run
+
 - **HTTP**: `POST http://localhost:8000/exchange_rates/ingest?days=30` triggers a fetch/merge for the most recent 30 days (0–31 days allowed). The response includes inserted row count and timestamps.
 - **Docs/Swagger**: browse to `http://localhost:8000/docs` (Swagger UI) or `http://localhost:8000/redoc` to trigger the endpoint interactively and inspect request/response schemas.
 
